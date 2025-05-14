@@ -1,169 +1,112 @@
 import java.awt.Component;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 /**
- * This is essentially a wrapper for a Swing JFrame and a Thread starter, so the
- * user doesn't have to mess with it.
+ * Simplified version of SwingApplication that focuses on just
+ * getting rendering to work correctly.
  */
 public abstract class SwingApplication {
 
-	private static final int SECONDS_TO_MS = 1000;	// Number of milliseconds per second.
-	private final JFrame FRAME;						// JFrame to add content to.
-	private Timer timer;							// Timer for updating the JFrame.
-	private int fps;								// Frames per second to run the timer
-	private int ms;									// Milliseconds to specify the speed of our timer.
-	private boolean isRunning = false;				// Boolean to set the timer to run.
+	private final JFrame frame;     // JFrame to add content to
+	private Timer timer;            // Timer for updating the JFrame
+	private final int fps;          // Frames per second
+	private final int ms;           // Milliseconds per frame
+	private boolean isRunning = false;
 
 	public SwingApplication(int width, int height, int fps, String title) {
-		System.setProperty("sun.java2d.opengl", "true");
-
-		// Create the JFrame.
-		this.FRAME = new JFrame(title);
-		this.FRAME.setSize(width, height);
-		this.FRAME.setResizable(false);
-		this.FRAME.setLocationRelativeTo(null);
-		this.FRAME.setVisible(true);
-		this.FRAME.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		this.FRAME.addWindowListener(new WindowAdapter() {
+		// Create the frame first
+		this.frame = new JFrame(title);
+		this.frame.setSize(width, height);
+		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.frame.setResizable(false);
+		this.frame.setLocationRelativeTo(null);
+		
+		// Set up timing
+		this.fps = fps;
+		this.ms = 1000 / fps;
+		
+		// Register frame close handler
+		this.frame.addWindowListener(new WindowAdapter() {
 			@Override
-			public void windowClosing(WindowEvent windowEvent) {
+			public void windowClosing(WindowEvent e) {
 				stop();
 			}
 		});
-
-		this.fps = fps;	// Sets the current FPS and the millisecond update time for timer
-		this.ms = SECONDS_TO_MS / fps;
-
-		// Starts the timer.
-		SwingUtilities.invokeLater(() -> { this.start(); });
 	}
 
 	/**
-	 * Adds a Component object to the content pane of this JFrame.
-	 * 
-	 * @param component	component to add.
+	 * Add a component to the frame
 	 */
 	public void addComponent(Component component) {
-		this.FRAME.getContentPane().add(component);
+		this.frame.getContentPane().add(component);
 	}
 
 	/**
-	 * Sets the location of the frame to the center of the screen, and packs all
-	 * components together, updating their dimensions.
+	 * Pack and center the frame
 	 */
 	public void packComponents() {
-		this.FRAME.pack();
-		this.FRAME.setLocationRelativeTo(null);
+		this.frame.pack();
+		this.frame.setLocationRelativeTo(null);
 	}
 
 	/**
-	 * Invokes the thread loop for this swing application. Any code that needs
-	 * to be repeated should be placed inside this overridden method.
+	 * Make the frame visible and start the timer
 	 */
-	public abstract void run();
-
-	/**
-	 * Starts the program if it is not already running.
-	 */
-	private synchronized void start() {
-		if (this.isRunning) return;
-
-		this.isRunning = true;
-		this.update();
-	}
-
-	/**
-	 * Stops and destroys the timer and frame if it is not already stopped.
-	 */
-	private synchronized void stop() {
-		if (!this.isRunning) return;
+	public void start() {
+		if (isRunning) return;
 		
-		this.isRunning = false;
-		this.timer.stop();
-		this.FRAME.dispose();
+		// Show the frame
+		SwingUtilities.invokeLater(() -> {
+			this.frame.setVisible(true);
+			System.out.println("Frame made visible");
+			
+			// Create and start the timer
+			this.isRunning = true;
+			this.timer = new Timer(ms, e -> {
+				// Call the run method
+				run();
+				// Force a repaint
+				this.frame.repaint();
+			});
+			this.timer.start();
+			System.out.println("Timer started at " + fps + " FPS");
+		});
+	}
+
+	/**
+	 * Stop the timer and dispose the frame
+	 */
+	private void stop() {
+		if (!isRunning) return;
+		
+		isRunning = false;
+		if (timer != null) {
+			timer.stop();
+		}
+		frame.dispose();
 		System.exit(0);
 	}
 
 	/**
-	 * Initializes the update loop timer.
+	 * Abstract method to be implemented by subclasses
 	 */
-	private void update() {
-		this.setupAppTimer();
-		this.timer.start();
-	}
+	public abstract void run();
 
 	/**
-	 * Sets up the application and render timer.
-	 */
-	private void setupAppTimer() {
-		this.timer = new Timer(this.ms, timerListener -> {
-			this.run();
-			this.FRAME.repaint();
-		});
-	}
-
-	// =================== GETTERS AND SETTERS ====================== //
-
-	/**
-	 * 
-	 * @param fps	frames per second
-	 */
-	public void setFPS(int fps) {
-		this.fps = fps;
-		this.ms = SECONDS_TO_MS / fps;
-		this.timer.setDelay(this.ms);
-	}
-
-	/**
-	 * 
-	 * @return	frames per second
-	 */
-	public int getFPS() {
-		return this.fps;
-	}
-
-	/**
-	 * 
-	 * @return whether it is running or not
-	 */
-	public boolean isRunning() {
-		return this.isRunning;
-	}
-
-	/**
-	 * 
-	 * @param running set run status
-	 */
-	public void setRunning(boolean running) {
-		this.isRunning = running;
-	}
-
-	/**
-	 * 
-	 * @return	frame visibility
-	 */
-	public boolean isVisible() {
-		return this.FRAME.isVisible();
-	}
-
-	/**
-	 * 
-	 * @param visible	set frames visibility
-	 */
-	public void setVisible(boolean visible) {
-		this.FRAME.setVisible(true);
-	}
-
-	/**
-	 * 
-	 * @return the JFrame
+	 * Get the JFrame
 	 */
 	public JFrame getFrame() {
-		return this.FRAME;
+		return this.frame;
+	}
+
+	/**
+	 * Set frame visibility
+	 */
+	public void setVisible(boolean visible) {
+		this.frame.setVisible(visible);
 	}
 }
