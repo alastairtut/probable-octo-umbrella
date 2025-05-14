@@ -14,13 +14,23 @@ public class RaymarcherPanel extends JPanel {
 	
 	public RaymarcherPanel(RaymarcherRunner raymarcherRunner) {
 		this.raymarcherRunner = raymarcherRunner;
-		this.setPreferredSize(new Dimension(this.raymarcherRunner.getFrame().getHeight(), 
-				this.raymarcherRunner.getFrame().getHeight())); 
+
+		this.setBackground(Color.RED);
+
+		Dimension size = new Dimension(this.raymarcherRunner.getFrame().getHeight(), this.raymarcherRunner.getFrame().getHeight()); 
+
+		this.setPreferredSize(size);
+		this.setMinimumSize(size);
+		this.setMaximumSize(size);
+		
+		// Make the panel visible
+		this.setVisible(true);
 	}
 	
 	// All drawing code goes here
 	@Override
 	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setColor(Color.BLUE);
 		g2d.fillRect(0, 0, this.getWidth(),this.getHeight());
