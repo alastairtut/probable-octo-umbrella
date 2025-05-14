@@ -1,8 +1,11 @@
+import java.awt.BorderLayout;
+import javax.swing.SwingUtilities;
+
 /**
  * RaymarcherRunner is the driver class where the JPanel
  * is initialized and instantiated.
  * 
- * This class will be run to being the program
+ * This class will be run to begin the program
  */
 public class RaymarcherRunner extends SwingApplication {
 	
@@ -15,25 +18,45 @@ public class RaymarcherRunner extends SwingApplication {
 	public RaymarcherRunner(int width, int height, int fps, String title) {
 		super(width, height, fps, title);
 		
-		// instantiate and add the raymarcher panel.
-		this.raymarcherPanel = new RaymarcherPanel(this);
-		this.addComponent(raymarcherPanel);
-		this.packComponents();
-		this.setVisible(true);
-
-		this.getFrame().validate();
-		this.raymarcherPanel.repaint();
+		// Ensure frame is created before continuing
+		SwingUtilities.invokeLater(() -> {
+		    // Explicitly set the layout manager
+		    getFrame().getContentPane().setLayout(new BorderLayout());
+		    
+		    // Create the panel AFTER the frame is fully initialized
+		    this.raymarcherPanel = new RaymarcherPanel(this);
+		    
+		    // Add the panel to the center of the layout
+		    getFrame().getContentPane().add(raymarcherPanel, BorderLayout.CENTER);
+		    
+		    // Pack to ensure proper sizing
+		    packComponents();
+		    
+		    // Print debug info
+		    System.out.println("Frame size after packing: " + 
+		        getFrame().getWidth() + "x" + getFrame().getHeight());
+		    System.out.println("Content pane size: " + 
+		        getFrame().getContentPane().getWidth() + "x" + 
+		        getFrame().getContentPane().getHeight());
+		    
+		    // Force validation and repaint
+		    getFrame().validate();
+		    getFrame().repaint();
+		});
 	}
 	
 	@Override
 	public void run() {
+		// This gets called by the timer at the specified FPS
 		if (raymarcherPanel != null) {
 			raymarcherPanel.repaint();
 		}
 	}
 	
 	public static void main(String[] args) {
-		RaymarcherRunner runner = new RaymarcherRunner(WIDTH, HEIGHT, TARGET_FPS, TITLE);
-		runner.run();
+		// Ensure we're on the EDT for frame creation
+		SwingUtilities.invokeLater(() -> {
+			RaymarcherRunner runner = new RaymarcherRunner(WIDTH, HEIGHT, TARGET_FPS, TITLE);
+		});
 	}
 }
