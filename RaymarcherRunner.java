@@ -10,19 +10,26 @@ public class RaymarcherRunner extends SwingApplication {
 	private static final int HEIGHT		= 640;			// Height of the JFrame.
 	private static final int TARGET_FPS = 60;			// The frames-per-second for the app.
 	private static final String TITLE	= "Raymarcher";	// Title of the JFrame.
+	private RaymarcherPanel	raymarcherPanel;	// The raymarcher panel.
 	
 	public RaymarcherRunner(int width, int height, int fps, String title) {
 		super(width, height, fps, title);
 		
 		// instantiate and add the raymarcher panel.
-		RaymarcherPanel raymarcherPanel = new RaymarcherPanel(this);
+		this.raymarcherPanel = new RaymarcherPanel(this);
 		this.addComponent(raymarcherPanel);
 		this.packComponents();
 		this.setVisible(true);
+
+		this.getFrame().validate();
+		this.raymarcherPanel.repaint();
 	}
 	
 	@Override
 	public void run() {
+		if (raymarcherPanel != null) {
+			raymarcherPanel.repaint();
+		}
 	}
 	
 	public static void main(String[] args) {
